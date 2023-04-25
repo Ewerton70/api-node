@@ -1,24 +1,24 @@
 import livros from '../models/Livro.js'
-
+import EditoraController from '../controllers/editoraController.js'
 class LivroController {
     static listarLivros = (req, res) => {
         livros.find()
-        .populate('autor')
-        .populate('editora')
-        .exec((err, livros) => {
-            res.status(200).json(livros)
-        })
+            .populate('autor')
+            .populate('editora')
+            .exec((err, livros) => {
+                res.status(200).json(livros)
+            })
     }
 
     static listarLivroPorId = (req, res) => {
         const id = req.params.id;
 
-        livros.findById(id) 
-        .populate('autor', 'nome')
-        .populate('editora', 'nome')
-        .exec((err, livros) => {
-            !err ? res.status(200).send(livros) : res.status(400).send({ message: `${err.message} - Id do livro não localizado.` })
-        })
+        livros.findById(id)
+            .populate('autor', 'nome')
+            .populate('editora', 'nome')
+            .exec((err, livros) => {
+                !err ? res.status(200).send(livros) : res.status(400).send({ message: `${err.message} - Id do livro não localizado.` })
+            })
     }
 
     static cadastrarLivros = (req, res) => {
@@ -46,14 +46,22 @@ class LivroController {
         })
     }
 
-    static listarLivroPorEditora = (req, res) =>{
-        const editora = req.query.editora
-            
-        livros.find({'editora': editora},{},(err, livros)=>{
-            res.status(200).send(livros)
-        })
+    static async listarLivroPorEditora(req, res) {
+        const editoraNome = req.query.editora; // obter o nome da editora a partir da requisição
+
+        var editora = await EditoraController.buscarEditoraPorNome(editoraNome);
+
+        if (!editora) {
+            res.status(500).send('Erro ao buscar livros.');
+        } else {
+            livros.find({ 'editora': editora })
+                .populate('autor')
+                .populate('editora')
+                .exec((err, livros) => {
+                    res.status(200).json(livros);
+                });
+        }
     }
-
 }
-
 export default LivroController
+
